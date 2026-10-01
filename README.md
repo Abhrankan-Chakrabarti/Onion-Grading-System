@@ -86,8 +86,8 @@ Navigate to **`http://127.0.0.1:8000`** in your browser.
 ---
 
 ## � Contributors
-- Abhishek Saha (@sahaabhishek0987)
-- Arunima Adhikary (@arunima-adhikary7)
+- [Abhishek Saha](https://github.com/sahaabhishek0987) (@sahaabhishek0987)
+- [Arunima Adhikary](https://github.com/arunima-adhikary7) (@arunima-adhikary7)
 
-## �📜 License
+## 📜 License
 This project is open-source under the MIT License.
