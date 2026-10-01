@@ -1,0 +1,2359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>OnionLens — AGMARK Quality Assessment & Price Forecaster</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            /* ---- Soft, warm palette grounded in onion skins & mandi produce ---- */
+            --bg: #F5F2EA;             /* warm parchment */
+            --bg-soft: #EFEAE0;
+            --panel: #FCFAF5;          /* card surface, near-white warm */
+            --panel-sunken: #F5F1E8;
+
+            --ink: #40392F;            /* soft charcoal, not pure black */
+            --ink-muted: #837A6A;
+            --ink-faint: #A79D8A;
+
+            --border: #E3DBC8;
+            --border-soft: #ECE6D7;
+
+            --sage: #7C9473;           /* scallion green — primary accent */
+            --sage-deep: #55704C;
+            --sage-tint: #E7EEE2;
+
+            --clay: #BE7A56;           /* onion-skin terracotta — secondary accent */
+            --clay-deep: #92573A;
+            --clay-tint: #F4E7DC;
+
+            --gold: #C9994F;           /* medium grade / warmth */
+            --gold-deep: #93702F;
+            --gold-tint: #F3E9D3;
+
+            --sky: #6C97A8;            /* small grade / info */
+            --sky-deep: #43697A;
+            --sky-tint: #E4EEF1;
+
+            --rose: #BD6F63;           /* reject — muted, not alarming */
+            --rose-deep: #8C4A40;
+            --rose-tint: #F3E2DD;
+
+            --shadow: 0 8px 24px -10px rgba(64, 57, 47, 0.14);
+            --shadow-soft: 0 2px 10px -4px rgba(64, 57, 47, 0.10);
+        }
+
+        * { scrollbar-color: var(--ink-faint) var(--bg-soft); }
+
+        body {
+            background-color: var(--bg);
+            color: var(--ink);
+            font-family: 'Karla', system-ui, -apple-system, sans-serif;
+            line-height: 1.55;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Fraunces', Georgia, serif;
+            color: var(--ink);
+            letter-spacing: 0.1px;
+        }
+
+        /* ---- Hero ---- */
+
+        .hero-banner {
+            background: linear-gradient(180deg, #EFE8D6 0%, #F5F2EA 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 2.6rem 0 2.2rem;
+        }
+
+        .hero-banner h1 {
+            font-size: 2.1rem;
+            font-weight: 600;
+            font-optical-sizing: auto;
+        }
+
+        .hero-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--sage-deep);
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .hero-kicker .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--sage);
+            display: inline-block;
+        }
+
+        /* ---- Cards ---- */
+
+        .card-custom {
+            background-color: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            box-shadow: var(--shadow-soft);
+            margin-bottom: 1.5rem;
+        }
+
+        hr.border-secondary { border-color: var(--border-soft) !important; opacity: 1; }
+
+        /* ---- Text utility overrides (soft ink tones, no harsh greys) ---- */
+
+        .text-slate-300, .text-slate-400 { color: var(--ink-muted) !important; }
+        .text-muted { color: var(--ink-faint) !important; }
+        .text-light { color: var(--ink) !important; }
+        .text-info { color: var(--sky-deep) !important; }
+        .text-success { color: var(--sage-deep) !important; }
+        .text-warning { color: var(--gold-deep) !important; }
+        .text-danger { color: var(--rose-deep) !important; }
+        .text-primary { color: var(--clay-deep) !important; }
+
+        label.form-label { color: var(--ink-muted); font-weight: 600; font-size: 0.88rem; }
+
+        /* ---- Form controls ---- */
+
+        .form-control, .form-select {
+            background-color: var(--panel-sunken) !important;
+            color: var(--ink) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: 9px;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--sage) !important;
+            box-shadow: 0 0 0 0.2rem rgba(124, 148, 115, 0.18) !important;
+        }
+
+        .bg-dark { background-color: var(--panel-sunken) !important; color: var(--ink) !important; }
+        .border-secondary { border-color: var(--border) !important; }
+
+        /* ---- Buttons ---- */
+
+        .btn-primary {
+            background-color: var(--clay);
+            border-color: var(--clay);
+            color: #FFFDF9;
+            border-radius: 10px;
+            font-family: 'Karla', sans-serif;
+        }
+
+        .btn-primary:hover, .btn-primary:focus, .btn-primary:active {
+            background-color: var(--clay-deep) !important;
+            border-color: var(--clay-deep) !important;
+        }
+
+        .btn-outline-info {
+            color: var(--sky-deep);
+            border-color: var(--sky);
+            border-radius: 10px;
+        }
+
+        .btn-outline-info:hover {
+            background-color: var(--sky);
+            border-color: var(--sky);
+            color: #FFFDF9;
+        }
+
+        .btn-danger {
+            background-color: var(--rose);
+            border-color: var(--rose);
+            border-radius: 10px;
+            color: #FFFDF9;
+        }
+
+        .btn-danger:hover { background-color: var(--rose-deep) !important; border-color: var(--rose-deep) !important; }
+
+        /* ---- Grade badges (soft tinted, not glowing neon) ---- */
+
+        .grade-badge-huge {
+            font-size: 1.55rem;
+            font-weight: 600;
+            font-family: 'Fraunces', serif;
+            padding: 0.55rem 1.5rem;
+            border-radius: 999px;
+            display: inline-block;
+            border: 1px solid transparent;
+        }
+
+        .bg-grade-GradeA {
+            background-color: var(--sage-tint);
+            color: var(--sage-deep);
+            border-color: #C7D8BE;
+        }
+
+        .bg-grade-GradeB {
+            background-color: var(--gold-tint);
+            color: var(--gold-deep);
+            border-color: #E4CE9C;
+        }
+
+        .bg-grade-SmallGrade {
+            background-color: var(--sky-tint);
+            color: var(--sky-deep);
+            border-color: #C4DCE2;
+        }
+
+        .bg-grade-Reject {
+            background-color: var(--rose-tint);
+            color: var(--rose-deep);
+            border-color: #E2C2B9;
+        }
+
+        .bg-grade-Mixed {
+            background-color: var(--clay-tint);
+            color: var(--clay-deep);
+            border-color: #E4CBB6;
+        }
+
+        .bg-grade-NoProduceDetected {
+            background-color: var(--panel-sunken);
+            color: var(--ink-faint);
+            border-color: var(--border);
+        }
+
+        /* ---- Category badges (used both statically and by JS for per-item grades) ---- */
+
+        .badge.bg-success { background-color: var(--sage-tint) !important; color: var(--sage-deep) !important; font-weight: 600; }
+        .badge.bg-warning { background-color: var(--gold-tint) !important; color: var(--gold-deep) !important; font-weight: 600; }
+        .badge.bg-info    { background-color: var(--sky-tint) !important; color: var(--sky-deep) !important; font-weight: 600; }
+        .badge.bg-danger  { background-color: var(--rose-tint) !important; color: var(--rose-deep) !important; font-weight: 600; }
+        .badge.bg-secondary { background-color: var(--panel-sunken) !important; color: var(--ink-muted) !important; }
+        .badge.bg-primary { background-color: var(--clay-tint) !important; color: var(--clay-deep) !important; }
+        .badge.text-dark { color: inherit !important; }
+
+        .vision-preview {
+            width: 100%;
+            max-height: 380px;
+            border-radius: 12px;
+            object-fit: contain;
+            background-color: var(--panel-sunken);
+            border: 1px solid var(--border);
+        }
+
+        .metric-card {
+            background-color: var(--panel-sunken);
+            border: 1px solid var(--border-soft);
+            border-radius: 12px;
+            padding: 1.15rem;
+            text-align: center;
+        }
+
+        .metric-number {
+            font-family: 'Fraunces', serif;
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--clay-deep);
+        }
+
+        .metric-title {
+            font-size: 0.76rem;
+            color: var(--ink-faint);
+            letter-spacing: 0.3px;
+            margin-top: 0.15rem;
+        }
+
+        .defect-pill {
+            background-color: var(--panel);
+            border: 1px solid var(--border-soft);
+            border-radius: 8px;
+            padding: 0.4rem 0.6rem;
+            font-size: 0.84rem;
+            color: var(--ink);
+        }
+
+        .mandi-badge {
+            background: linear-gradient(135deg, var(--sage) 0%, var(--sage-deep) 100%);
+            color: #FFFDF9;
+            padding: 0.5rem 1.2rem;
+            border-radius: 10px;
+            font-weight: 700;
+            font-family: 'Fraunces', serif;
+        }
+
+        .mandi-badge-rejected {
+            background: linear-gradient(135deg, var(--rose) 0%, var(--rose-deep) 100%);
+            color: #FFFDF9;
+            padding: 0.5rem 1.2rem;
+            border-radius: 10px;
+            font-weight: 700;
+        }
+
+        .source-info-box {
+            background-color: var(--sky-tint);
+            border-left: 3px solid var(--sky);
+            padding: 0.85rem 1.1rem;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.85rem;
+            color: var(--ink-muted);
+        }
+
+        .advice-card {
+            background: var(--panel-sunken);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+        }
+
+        .auto-detect-badge {
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 0.45rem 0.85rem;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        .bg-success.auto-detect-badge, .auto-detect-badge.bg-success {
+            background-color: var(--sage-tint) !important;
+            color: var(--sage-deep) !important;
+        }
+
+        .auto-detect-badge.bg-warning {
+            background-color: var(--gold-tint) !important;
+            color: var(--gold-deep) !important;
+        }
+
+        .auto-detect-badge.bg-secondary {
+            background-color: var(--panel-sunken) !important;
+            color: var(--ink-faint) !important;
+        }
+
+        .active-learning-badge {
+            background: var(--clay-tint);
+            color: var(--clay-deep);
+            border: 1px solid #E4CBB6;
+            border-radius: 10px;
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .pulse-active {
+            animation: pulse-soft 2.2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-soft {
+            0%   { box-shadow: 0 0 0 0 rgba(124, 148, 115, 0.35); }
+            70%  { box-shadow: 0 0 0 9px rgba(124, 148, 115, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(124, 148, 115, 0); }
+        }
+
+        /* ---- Table ---- */
+
+        .table-dark {
+            --bs-table-bg: var(--panel-sunken);
+            --bs-table-color: var(--ink);
+            --bs-table-border-color: var(--border-soft);
+        }
+
+        .table-secondary {
+            background-color: var(--sage-tint) !important;
+            color: var(--sage-deep) !important;
+        }
+
+        /* ---- Alerts (used by JS "no produce detected" message) ---- */
+
+        .alert-secondary {
+            background-color: var(--panel-sunken);
+            border: 1px solid var(--border);
+            color: var(--ink-muted);
+        }
+
+        /* ---- Item log cards rendered by JS reuse .card-custom.bg-dark ---- */
+
+        #itemListContainer .card-custom {
+            background-color: var(--panel-sunken) !important;
+        }
+
+        /* ---- Video / canvas ---- */
+
+        #webcamVideo {
+            border-radius: 12px;
+            border: 1px solid var(--sky) !important;
+        }
+
+        /* ---- Roboflow model-class chip (per item, from the hosted detector) ---- */
+
+        .model-class-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            background-color: var(--clay-tint);
+            color: var(--clay-deep);
+            border: 1px solid #E4CBB6;
+            border-radius: 20px;
+            padding: 0.2rem 0.65rem;
+            font-size: 0.76rem;
+            font-weight: 600;
+        }
+
+        /* ---- Calibration banner + inline recalibration controls ---- */
+
+        .calibration-banner {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.6rem;
+            border-radius: 10px;
+            padding: 0.65rem 0.9rem;
+            font-size: 0.82rem;
+            margin-bottom: 1rem;
+        }
+
+        .calibration-banner.is-default {
+            background-color: var(--gold-tint);
+            color: var(--gold-deep);
+            border: 1px solid #E4CE9C;
+        }
+
+        .calibration-banner.is-calibrated {
+            background-color: var(--sage-tint);
+            color: var(--sage-deep);
+            border: 1px solid #C7D8BE;
+        }
+
+        .calibration-banner button {
+            white-space: nowrap;
+        }
+
+        .recalibrate-box {
+            background-color: var(--panel-sunken);
+            border: 1px solid var(--border-soft);
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+            margin-top: 0.6rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- HERO -->
+    <div class="hero-banner text-center">
+        <div class="container">
+            <span class="hero-kicker mb-2">
+                <span class="dot"></span>
+                Computer vision · AGMARK grading · Price forecasting
+            </span>
+            <h1 class="mb-2">
+                🧅 OnionLens
+            </h1>
+            <p class="text-slate-400 mb-0">
+                Grade produce from a photo or a live camera, and see what it's likely worth at mandi.
+            </p>
+        </div>
+    </div>
+
+
+    <div class="container mt-4 mb-5">
+
+        <div class="row">
+
+            <!-- ===================================================== -->
+            <!-- LEFT COLUMN - INPUT / CAMERA / AGMARK INFORMATION -->
+            <!-- ===================================================== -->
+
+            <div class="col-lg-5">
+
+                <!-- IMAGE INPUT -->
+                <div class="card-custom p-4">
+
+                    <h4 class="mb-3">
+                        <i class="fa-solid fa-camera text-primary me-2"></i>
+                        Image & live feed inspection
+                    </h4>
+
+                    <form id="uploadForm">
+
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                Upload produce image
+                            </label>
+
+                            <input
+                                type="file"
+                                id="imageFile"
+                                class="form-control"
+                                accept="image/*"
+                            >
+
+                        </div>
+
+
+                        <!-- CALIBRATION -->
+
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                Camera distance calibration
+                            </label>
+
+                            <select
+                                id="distancePreset"
+                                class="form-select mb-2"
+                            >
+
+                                <option value="2.5">
+                                    📷 Standard desk camera (~30cm) — 2.5 px/mm
+                                </option>
+
+                                <option value="4.5">
+                                    🔍 Close-up inspection (~15cm) — 4.5 px/mm
+                                </option>
+
+                                <option value="1.2">
+                                    🔭 Overhead conveyor / crate (~60cm) — 1.2 px/mm
+                                </option>
+
+                                <option value="custom">
+                                    ⚙️ Custom manual calibration
+                                </option>
+
+                            </select>
+
+
+                            <div id="customCalibBox" class="d-none mt-2">
+
+                                <label class="form-label small">
+                                    Custom factor (pixels / mm)
+                                </label>
+
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    id="calibrationPx"
+                                    class="form-control form-control-sm"
+                                    value="2.5"
+                                >
+
+                            </div>
+
+                            <div class="small text-muted mt-2">
+                                <i class="fa-solid fa-circle-info me-1"></i>
+                                This is only a starting guess. If a result's size
+                                looks off, use "Calibrate with a known size" under
+                                the results to correct it for this exact photo.
+                            </div>
+
+                        </div>
+
+
+                        <button
+                            type="submit"
+                            id="submitBtn"
+                            class="btn btn-primary btn-lg w-100 fw-bold"
+                        >
+
+                            <i class="fa-solid fa-microscope me-2"></i>
+                            Run vision assessment
+
+                        </button>
+
+                    </form>
+
+
+                    <hr class="border-secondary my-4">
+
+
+                    <!-- LIVE CAMERA -->
+
+                    <div class="text-center">
+
+                        <h6 class="text-slate-300 mb-2">
+
+                            <i class="fa-solid fa-bolt text-warning me-2"></i>
+                            Live auto-detect camera
+
+                        </h6>
+
+                        <p class="small text-muted mb-3">
+
+                            Turn on the camera to automatically detect produce
+                            and grade it as soon as an onion is placed in view.
+
+                        </p>
+
+
+                        <button
+                            id="webcamBtn"
+                            class="btn btn-outline-info w-100 mb-2 fw-bold"
+                        >
+
+                            <i class="fa-solid fa-video me-2"></i>
+                            Start live auto-detect camera
+
+                        </button>
+
+
+                        <div
+                            id="autoDetectStatus"
+                            class="auto-detect-badge bg-secondary d-none mb-2"
+                        >
+
+                            <i class="fa-solid fa-circle-notch fa-spin me-1"></i>
+                            Camera initializing…
+
+                        </div>
+
+
+                        <video
+                            id="webcamVideo"
+                            class="w-100 mt-2 rounded d-none"
+                            autoplay
+                            playsinline
+                        ></video>
+
+                        <canvas id="webcamCanvas" class="d-none"></canvas>
+
+                    </div>
+
+                </div>
+
+
+                <!-- AGMARK SIZE STANDARDS -->
+
+                <div class="card-custom p-4">
+
+                    <h5 class="mb-3 text-warning">
+
+                        <i class="fa-solid fa-ruler-combined me-2"></i>
+                        AGMARK size standards
+
+                    </h5>
+
+
+                    <div class="table-responsive">
+
+                        <table class="table table-dark table-sm table-bordered text-center mb-0 small">
+
+                            <thead>
+
+                                <tr class="table-secondary">
+
+                                    <th>Grade</th>
+                                    <th>Diameter range</th>
+                                    <th>Commercial size</th>
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody>
+
+                                <tr>
+
+                                    <td>
+                                        <span class="badge bg-success">
+                                            Grade A
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <strong>≥ 55 mm</strong>
+                                        (5.5 cm+)
+                                    </td>
+
+                                    <td>
+                                        Large / export grade
+                                    </td>
+
+                                </tr>
+
+
+                                <tr>
+
+                                    <td>
+                                        <span class="badge bg-warning text-dark">
+                                            Grade B
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <strong>40 - 55 mm</strong>
+                                        (4 - 5.5 cm)
+                                    </td>
+
+                                    <td>
+                                        Medium / wholesale
+                                    </td>
+
+                                </tr>
+
+
+                                <tr>
+
+                                    <td>
+                                        <span class="badge bg-info text-dark">
+                                            Small
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <strong>30 - 40 mm</strong>
+                                        (3 - 4 cm)
+                                    </td>
+
+                                    <td>
+                                        Sambar / pickle size
+                                    </td>
+
+                                </tr>
+
+
+                                <tr>
+
+                                    <td>
+                                        <span class="badge bg-danger">
+                                            Reject
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <strong>&lt; 30 mm</strong>
+                                        (&lt; 3 cm)
+                                    </td>
+
+                                    <td>
+                                        Factory dehydration
+                                    </td>
+
+                                </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+
+                <!-- MANDI SOURCE -->
+
+                <div class="card-custom p-4">
+
+                    <h5 class="mb-3 text-info">
+
+                        <i class="fa-solid fa-building-columns me-2"></i>
+                        Mandi price source & benchmarks
+
+                    </h5>
+
+
+                    <div class="source-info-box mb-3">
+
+                        <i class="fa-solid fa-building-columns me-2"></i>
+
+                        <strong>Source:</strong>
+                        Agmarknet (Ministry of Agriculture & Farmers Welfare,
+                        Govt. of India) daily wholesale mandi price index.
+
+                    </div>
+
+
+                    <ul class="list-unstyled text-slate-300 small mb-0">
+
+                        <li class="mb-2">
+
+                            <span class="badge bg-success me-2">
+                                Grade A
+                            </span>
+
+                            <strong>100% modal price</strong>:
+                            premium export grade (&gt;55mm, uniform skin, 0% rot)
+
+                        </li>
+
+
+                        <li class="mb-2">
+
+                            <span class="badge bg-warning text-dark me-2">
+                                Grade B
+                            </span>
+
+                            <strong>65% modal price</strong>:
+                            standard domestic wholesale (40-55mm, minor defect)
+
+                        </li>
+
+
+                        <li class="mb-2">
+
+                            <span class="badge bg-info text-dark me-2">
+                                Small
+                            </span>
+
+                            <strong>45% modal price</strong>:
+                            sambar / pickle wholesale grade (30-40mm)
+
+                        </li>
+
+
+                        <li>
+
+                            <span class="badge bg-danger me-2">
+                                Reject
+                            </span>
+
+                            <strong>No commercial price (₹0.0)</strong>:
+                            unfit for retail market
+
+                        </li>
+
+                    </ul>
+
+                </div>
+
+            </div>
+
+
+            <!-- ===================================================== -->
+            <!-- RIGHT COLUMN -->
+            <!-- ===================================================== -->
+
+            <div class="col-lg-7">
+
+
+                <!-- ================================================= -->
+                <!-- 1. AI COMPUTER VISION OUTPUT -->
+                <!-- ================================================= -->
+
+                <div class="card-custom p-4">
+
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+
+                        <h4 class="mb-0 text-info">
+
+                            <i class="fa-solid fa-display me-2"></i>
+                            Vision output
+
+                        </h4>
+
+
+                        <div
+                            id="activeLearningBadge"
+                            class="active-learning-badge d-none"
+                        >
+
+                            <i class="fa-solid fa-brain me-1"></i>
+                            Model learning active
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- EMPTY STATE -->
+
+                    <div
+                        id="emptyState"
+                        class="text-center py-5"
+                    >
+
+                        <i class="fa-solid fa-box-open fa-3x mb-3" style="color: var(--ink-faint);"></i>
+
+                        <h5>
+                            Nothing analyzed yet
+                        </h5>
+
+                        <p class="small text-muted">
+
+                            Upload an image or start the live auto-detect
+                            camera to run vision segmentation and AGMARK grading.
+
+                        </p>
+
+                    </div>
+
+
+                    <!-- RESULTS -->
+
+                    <div id="resultsContent" class="d-none">
+
+
+                        <!-- ANNOTATED IMAGE -->
+
+                        <div class="mb-4 text-center">
+
+                            <h6 class="text-slate-400 mb-2">
+
+                                Segmentation & defect overlay
+
+                            </h6>
+
+                            <img
+                                id="annotatedOverlay"
+                                class="vision-preview"
+                                alt="Computer Vision Segmentation Overlay"
+                            >
+
+                        </div>
+
+
+                        <!-- CALIBRATION STATUS -->
+
+                        <div id="calibrationBanner" class="calibration-banner is-default">
+
+                            <i class="fa-solid fa-ruler me-1 mt-1"></i>
+
+                            <div class="flex-grow-1">
+                                <div id="calibrationNote">
+                                    Sizes use a default camera-distance assumption.
+                                </div>
+                            </div>
+
+                            <button
+                                type="button"
+                                id="openRecalibrateBtn"
+                                class="btn btn-sm btn-outline-info"
+                            >
+                                <i class="fa-solid fa-ruler-combined me-1"></i>
+                                Calibrate with a known size
+                            </button>
+
+                        </div>
+
+
+                        <!-- RECALIBRATION CONTROLS (hidden until requested) -->
+
+                        <div id="recalibrateBox" class="recalibrate-box d-none">
+
+                            <div class="small fw-bold mb-2">
+                                <i class="fa-solid fa-ruler-combined me-1"></i>
+                                Tell us the real size of one item to fix this photo's scale
+                            </div>
+
+                            <div class="row g-2 align-items-end">
+
+                                <div class="col-5">
+                                    <label class="form-label small mb-1">Item</label>
+                                    <select id="recalItemSelect" class="form-select form-select-sm"></select>
+                                </div>
+
+                                <div class="col-4">
+                                    <label class="form-label small mb-1">Actual diameter (mm)</label>
+                                    <input type="number" step="0.1" id="recalDiameterInput" class="form-control form-control-sm" placeholder="e.g. 70">
+                                </div>
+
+                                <div class="col-3">
+                                    <button type="button" id="recalSubmitBtn" class="btn btn-sm btn-primary w-100">
+                                        Recalibrate
+                                    </button>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- GRADE + PRICE -->
+
+                        <div
+                            class="d-flex justify-content-between align-items-center mb-4 bg-dark p-3 rounded-4 border border-secondary"
+                        >
+
+                            <div>
+
+                                <span class="text-muted small d-block">
+                                    Batch assessment
+                                </span>
+
+                                <div
+                                    id="mainGradeBadge"
+                                    class="grade-badge-huge mt-1"
+                                >
+                                    Grade A
+                                </div>
+
+                            </div>
+
+
+                            <div class="text-end">
+
+                                <span class="text-muted small d-block">
+
+                                    <i class="fa-solid fa-tag me-1"></i>
+                                    Expected price
+
+                                </span>
+
+                                <span
+                                    id="mandiPrice"
+                                    class="mandi-badge fs-4 mt-1 d-inline-block"
+                                >
+                                    ₹40.0 / kg
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- METRICS -->
+
+                        <div class="row g-3 mb-4">
+
+
+                            <div class="col-4">
+
+                                <div class="metric-card">
+
+                                    <div
+                                        id="avgDiameter"
+                                        class="metric-number"
+                                    >
+                                        58.5 mm
+                                    </div>
+
+                                    <div class="metric-title">
+                                        Avg max diameter
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="col-4">
+
+                                <div class="metric-card">
+
+                                    <div
+                                        id="itemCount"
+                                        class="metric-number"
+                                    >
+                                        1
+                                    </div>
+
+                                    <div class="metric-title">
+                                        Items segmented
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="col-4">
+
+                                <div class="metric-card">
+
+                                    <div
+                                        id="primaryDefect"
+                                        class="metric-number"
+                                        style="font-size: 1.05rem; padding-top: 0.3rem; color: var(--gold-deep);"
+                                    >
+                                        None
+                                    </div>
+
+                                    <div class="metric-title">
+                                        Primary defect
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- PER ITEM LOG -->
+
+                        <h6 class="text-slate-300 mb-3">
+
+                            <i class="fa-solid fa-list-check me-2"></i>
+                            Per-item inspection log
+
+                        </h6>
+
+
+                        <div id="itemListContainer">
+                            <!-- Rendered dynamically -->
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ================================================= -->
+                <!-- 2. MARKET GRAPH -->
+                <!-- ================================================= -->
+
+                <div class="card-custom p-4">
+
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+
+                        <h4 class="mb-0 text-success">
+
+                            <i class="fa-solid fa-chart-line me-2"></i>
+                            Mandi price & 14-day forecast
+
+                        </h4>
+
+
+                        <select
+                            id="mandiSelect"
+                            class="form-select form-select-sm"
+                            style="width: auto;"
+                        >
+
+                            <option value="Lasalgaon (Nashik, MH)">
+                                Lasalgaon (Nashik, MH)
+                            </option>
+
+                            <option value="Azadpur (Delhi)">
+                                Azadpur (Delhi)
+                            </option>
+
+                            <option value="Pune (MH)">
+                                Pune (MH)
+                            </option>
+
+                            <option value="Bengaluru (KA)">
+                                Bengaluru (KA)
+                            </option>
+
+                            <option value="Kurnool (AP)">
+                                Kurnool (AP)
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- PRICE GRAPH -->
+
+                    <div
+                        style="height: 300px; position: relative;"
+                        class="mb-3"
+                    >
+
+                        <canvas id="priceChart"></canvas>
+
+                    </div>
+
+
+                    <!-- MARKET ADVICE -->
+
+                    <div class="advice-card mt-2">
+
+                        <div class="d-flex align-items-center">
+
+                            <i class="fa-solid fa-lightbulb fa-2x me-3" style="color: var(--gold-deep);"></i>
+
+                            <div>
+
+                                <span
+                                    class="badge bg-info mb-1"
+                                    id="trendBadge"
+                                >
+                                    Market forecast
+                                </span>
+
+                                <div
+                                    class="fw-bold"
+                                    id="adviceText"
+                                >
+                                    Loading market recommendation…
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+<script>
+
+    /* =========================================================
+       DOM REFERENCES
+       ========================================================= */
+
+    const uploadForm = document.getElementById('uploadForm');
+    const imageFile = document.getElementById('imageFile');
+    const distancePreset = document.getElementById('distancePreset');
+    const customCalibBox = document.getElementById('customCalibBox');
+    const calibrationPx = document.getElementById('calibrationPx');
+    const submitBtn = document.getElementById('submitBtn');
+
+    const emptyState = document.getElementById('emptyState');
+    const resultsContent = document.getElementById('resultsContent');
+    const annotatedOverlay = document.getElementById('annotatedOverlay');
+    const mainGradeBadge = document.getElementById('mainGradeBadge');
+    const mandiPrice = document.getElementById('mandiPrice');
+    const avgDiameter = document.getElementById('avgDiameter');
+    const itemCount = document.getElementById('itemCount');
+    const primaryDefect = document.getElementById('primaryDefect');
+    const itemListContainer = document.getElementById('itemListContainer');
+    const activeLearningBadge = document.getElementById('activeLearningBadge');
+
+    const mandiSelect = document.getElementById('mandiSelect');
+    const trendBadge = document.getElementById('trendBadge');
+    const adviceText = document.getElementById('adviceText');
+
+    const webcamBtn = document.getElementById('webcamBtn');
+    const webcamVideo = document.getElementById('webcamVideo');
+    const webcamCanvas = document.getElementById('webcamCanvas');
+    const autoDetectStatus = document.getElementById('autoDetectStatus');
+
+    const calibrationBanner = document.getElementById('calibrationBanner');
+    const calibrationNote = document.getElementById('calibrationNote');
+    const openRecalibrateBtn = document.getElementById('openRecalibrateBtn');
+    const recalibrateBox = document.getElementById('recalibrateBox');
+    const recalItemSelect = document.getElementById('recalItemSelect');
+    const recalDiameterInput = document.getElementById('recalDiameterInput');
+    const recalSubmitBtn = document.getElementById('recalSubmitBtn');
+
+
+    /* =========================================================
+       STATE
+       ========================================================= */
+
+    let stream = null;
+    let priceChart = null;
+    let autoDetectInterval = null;
+    let isProcessingFrame = false;
+    let lastAutoCaptureTime = 0;
+
+    // Kept so "Calibrate with a known size" can re-submit the exact same
+    // photo with known_item_id / known_diameter_mm, instead of asking the
+    // person to re-upload it.
+    let lastProcessedFile = null;
+    let lastResultsData = null;
+
+
+    /* =========================================================
+       CALIBRATION (initial preset dropdown)
+       ========================================================= */
+
+    distancePreset.addEventListener('change', () => {
+
+        if (distancePreset.value === 'custom') {
+
+            customCalibBox.classList.remove('d-none');
+
+        } else {
+
+            customCalibBox.classList.add('d-none');
+            calibrationPx.value = distancePreset.value;
+
+        }
+
+    });
+
+
+    /* =========================================================
+       CALIBRATION (recalibrate-with-known-size, after grading)
+       ========================================================= */
+
+    openRecalibrateBtn.addEventListener('click', () => {
+
+        recalibrateBox.classList.toggle('d-none');
+
+    });
+
+
+    recalSubmitBtn.addEventListener('click', async () => {
+
+        const itemId = parseInt(recalItemSelect.value, 10);
+
+        const knownDiameter = parseFloat(recalDiameterInput.value);
+
+
+        if (!lastProcessedFile) {
+
+            alert("Run an assessment first, then calibrate it.");
+
+            return;
+
+        }
+
+        if (isNaN(itemId)) {
+
+            alert("Choose which item you're measuring.");
+
+            return;
+
+        }
+
+        if (isNaN(knownDiameter) || knownDiameter <= 0) {
+
+            alert("Enter the item's real diameter in millimeters.");
+
+            return;
+
+        }
+
+
+        recalSubmitBtn.disabled = true;
+
+        recalSubmitBtn.innerHTML =
+            '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+
+        try {
+
+            await processImageFile(
+                lastProcessedFile,
+                {
+                    knownItemId: itemId,
+                    knownDiameterMm: knownDiameter
+                }
+            );
+
+            recalibrateBox.classList.add('d-none');
+
+        } finally {
+
+            recalSubmitBtn.disabled = false;
+
+            recalSubmitBtn.innerText = "Recalibrate";
+
+        }
+
+    });
+
+
+    /* =========================================================
+       INITIAL MARKET DATA
+       ========================================================= */
+
+    window.addEventListener('load', () => {
+
+        loadMarketTrends(mandiSelect.value);
+
+    });
+
+
+    mandiSelect.addEventListener('change', () => {
+
+        loadMarketTrends(mandiSelect.value);
+
+    });
+
+
+    /* =========================================================
+       MARKET TRENDS
+       ========================================================= */
+
+    async function loadMarketTrends(mandiName) {
+
+        try {
+
+            const res = await fetch(
+                `/market_trends?mandi_name=${encodeURIComponent(mandiName)}`
+            );
+
+            if (!res.ok) return;
+
+            const data = await res.json();
+
+            trendBadge.innerText = data.trend_direction;
+
+            adviceText.innerText =
+                data.smart_storage_recommendation;
+
+            renderPriceChart(
+                data.historical_dates,
+                data.historical_prices,
+                data.forecast_dates,
+                data.forecast_prices
+            );
+
+        } catch (e) {
+
+            console.error(
+                "Failed to load market analytics",
+                e
+            );
+
+        }
+
+    }
+
+
+    /* =========================================================
+       PRICE CHART
+       ========================================================= */
+
+    function renderPriceChart(
+        histDates,
+        histPrices,
+        forecastDates,
+        forecastPrices
+    ) {
+
+        const ctx =
+            document.getElementById('priceChart').getContext('2d');
+
+        const labels = [
+            ...histDates,
+            ...forecastDates
+        ];
+
+        const historicalData = [
+            ...histPrices,
+            ...Array(forecastPrices.length).fill(null)
+        ];
+
+        const forecastData = [
+            ...Array(histPrices.length - 1).fill(null),
+            histPrices[histPrices.length - 1],
+            ...forecastPrices
+        ];
+
+
+        if (priceChart) {
+            priceChart.destroy();
+        }
+
+
+        priceChart = new Chart(ctx, {
+
+            type: 'line',
+
+            data: {
+
+                labels: labels,
+
+                datasets: [
+
+                    {
+                        label: 'Historical daily mandi price (₹/kg)',
+                        data: historicalData,
+                        borderColor: '#7C9473',
+                        backgroundColor: 'rgba(124, 148, 115, 0.12)',
+                        fill: true,
+                        tension: 0.35
+                    },
+
+                    {
+                        label: '14-day forecast price (₹/kg)',
+                        data: forecastData,
+                        borderColor: '#BE7A56',
+                        borderDash: [6, 6],
+                        backgroundColor: 'rgba(190, 122, 86, 0.10)',
+                        fill: true,
+                        tension: 0.35
+                    }
+
+                ]
+
+            },
+
+            options: {
+
+                responsive: true,
+
+                maintainAspectRatio: false,
+
+                plugins: {
+
+                    legend: {
+
+                        labels: {
+
+                            color: '#837A6A',
+
+                            font: {
+                                size: 11,
+                                family: 'Karla'
+                            }
+
+                        }
+
+                    }
+
+                },
+
+                scales: {
+
+                    x: {
+
+                        ticks: {
+                            color: '#A79D8A',
+                            maxRotation: 45,
+                            font: {
+                                size: 9
+                            }
+                        },
+
+                        grid: {
+                            color: '#ECE6D7'
+                        }
+
+                    },
+
+                    y: {
+
+                        ticks: {
+                            color: '#A79D8A'
+                        },
+
+                        grid: {
+                            color: '#ECE6D7'
+                        }
+
+                    }
+
+                }
+
+            }
+
+        });
+
+    }
+
+
+    /* =========================================================
+       IMAGE UPLOAD
+       ========================================================= */
+
+    uploadForm.addEventListener('submit', async (e) => {
+
+        e.preventDefault();
+
+        const file = imageFile.files[0];
+
+        if (!file) return;
+
+        await processImageFile(file);
+
+    });
+
+
+    /* =========================================================
+       PROCESS IMAGE
+       ========================================================= */
+
+    async function processImageFile(file, calibrationOverride) {
+
+        let calib = parseFloat(distancePreset.value);
+
+        if (distancePreset.value === 'custom') {
+
+            calib = parseFloat(calibrationPx.value);
+
+        }
+
+
+        if (isNaN(calib) || calib <= 0) {
+
+            calib = 2.5;
+
+        }
+
+
+        const selectedMandi = mandiSelect.value;
+
+        const formData = new FormData();
+
+        formData.append(
+            'file',
+            file,
+            file.name || "snapshot.jpg"
+        );
+
+
+        if (!isProcessingFrame) {
+
+            submitBtn.disabled = true;
+
+            submitBtn.innerHTML =
+                '<i class="fa-solid fa-spinner fa-spin me-2"></i>' +
+                'Segmenting & analyzing defects…';
+
+        }
+
+
+        try {
+
+            let url =
+                `/grade_image?pixels_per_mm=${calib}&mandi_name=${encodeURIComponent(selectedMandi)}`;
+
+            // Re-grading the same photo with a known real-world size for
+            // one item -- lets the backend recalibrate pixels_per_mm for
+            // THIS photo instead of using the generic distance preset.
+            if (calibrationOverride) {
+
+                url +=
+                    `&known_item_id=${calibrationOverride.knownItemId}` +
+                    `&known_diameter_mm=${calibrationOverride.knownDiameterMm}`;
+
+            }
+
+
+            const res = await fetch(
+                url,
+                {
+                    method: 'POST',
+                    body: formData
+                }
+            );
+
+
+            if (!res.ok) {
+
+                const errJson =
+                    await res.json().catch(() => ({
+                        detail: "Server error during assessment."
+                    }));
+
+                throw new Error(
+                    errJson.detail ||
+                    "Processing failed."
+                );
+
+            }
+
+
+            const data = await res.json();
+
+            lastProcessedFile = file;
+
+            renderResults(data);
+
+        } catch (err) {
+
+            console.warn(
+                "Assessment Notice: " +
+                err.message
+            );
+
+        } finally {
+
+            submitBtn.disabled = false;
+
+            submitBtn.innerHTML =
+                '<i class="fa-solid fa-microscope me-2"></i>' +
+                'Run vision assessment';
+
+        }
+
+    }
+
+
+    /* =========================================================
+       RENDER RESULTS
+       ========================================================= */
+
+    function renderResults(data) {
+
+        emptyState.classList.add('d-none');
+
+        resultsContent.classList.remove('d-none');
+
+        lastResultsData = data;
+
+
+        if (data.active_learning_status) {
+
+            activeLearningBadge.classList.remove('d-none');
+
+            activeLearningBadge.innerHTML =
+                `<i class="fa-solid fa-brain me-1"></i> ` +
+                `${data.active_learning_status}`;
+
+        }
+
+
+        if (data.annotated_image_base64) {
+
+            annotatedOverlay.src =
+                'data:image/jpeg;base64,' +
+                data.annotated_image_base64;
+
+        }
+
+
+        /* CALIBRATION BANNER */
+
+        if (data.calibration_status === 'user_calibrated') {
+
+            calibrationBanner.className = "calibration-banner is-calibrated";
+
+            calibrationNote.innerHTML =
+                `<i class="fa-solid fa-circle-check me-1"></i> ` +
+                (data.calibration_note || "This photo has been calibrated.");
+
+        } else {
+
+            calibrationBanner.className = "calibration-banner is-default";
+
+            calibrationNote.innerText =
+                data.calibration_note ||
+                "Sizes use a default camera-distance assumption, not a measurement from this photo.";
+
+        }
+
+
+        /* NO PRODUCE */
+
+        if (
+            data.items_count === 0 ||
+            data.overall_batch_grade === "No Produce Detected"
+        ) {
+
+            mainGradeBadge.className =
+                "grade-badge-huge bg-grade-NoProduceDetected";
+
+            mainGradeBadge.innerText =
+                "No produce detected";
+
+
+            mandiPrice.className =
+                "mandi-badge-rejected fs-6 mt-1 d-inline-block";
+
+            mandiPrice.innerText = "N/A";
+
+
+            avgDiameter.innerText = "0.0 mm";
+
+            itemCount.innerText = "0";
+
+            primaryDefect.innerText = "None";
+
+
+            itemListContainer.innerHTML = `
+                <div class="alert alert-secondary text-center">
+                    No valid onion or produce item detected in frame.
+                    Please place a produce item in camera view.
+                </div>
+            `;
+
+            recalItemSelect.innerHTML = '';
+
+            recalibrateBox.classList.add('d-none');
+
+            return;
+
+        }
+
+
+        /* GRADE */
+
+        const gRaw = data.overall_batch_grade;
+
+        let gClass = 'GradeA';
+
+
+        if (gRaw.includes('Grade A')) {
+
+            gClass = 'GradeA';
+
+        } else if (gRaw.includes('Grade B')) {
+
+            gClass = 'GradeB';
+
+        } else if (gRaw.includes('Small')) {
+
+            gClass = 'SmallGrade';
+
+        } else if (gRaw.includes('Mixed')) {
+
+            gClass = 'Mixed';
+
+        } else if (gRaw.includes('Reject')) {
+
+            gClass = 'Reject';
+
+        }
+
+
+        mainGradeBadge.className =
+            `grade-badge-huge bg-grade-${gClass}`;
+
+        mainGradeBadge.innerText =
+            data.overall_batch_grade;
+
+
+        /* PRICE */
+
+        if (
+            gClass === 'Reject' ||
+            data.estimated_mandi_price_inr === 0.0
+        ) {
+
+            mandiPrice.className =
+                "mandi-badge-rejected fs-6 mt-1 d-inline-block";
+
+            mandiPrice.innerText =
+                "N/A (unfit for market)";
+
+        } else {
+
+            mandiPrice.className =
+                "mandi-badge fs-4 mt-1 d-inline-block";
+
+            mandiPrice.innerText =
+                `₹${data.estimated_mandi_price_inr.toFixed(1)} / kg`;
+
+        }
+
+
+        /* METRICS */
+
+        avgDiameter.innerText =
+            `${data.average_diameter_mm.toFixed(1)} mm`;
+
+        itemCount.innerText =
+            data.items_count;
+
+
+        /* ITEMS */
+
+        let itemsHtml = '';
+
+        let highestDefect = "None";
+
+        let recalOptionsHtml = '';
+
+
+        data.results.forEach(item => {
+
+            if (
+                item.defects.primary_defect !== "None" &&
+                !item.defects.primary_defect.includes("Sound")
+            ) {
+
+                highestDefect =
+                    item.defects.primary_defect;
+
+            }
+
+
+            const badgeColor =
+                item.grade === 'Grade A'
+                    ? 'bg-success'
+                    : item.grade === 'Grade B'
+                        ? 'bg-warning text-dark'
+                        : item.grade === 'Small Grade'
+                            ? 'bg-info text-dark'
+                            : 'bg-danger';
+
+
+            // The Roboflow hosted model's own class + confidence for this
+            // item (visible in the server terminal log as e.g.
+            // "class=bad-onion conf=0.77") -- surfaced here so it isn't
+            // only visible server-side.
+            let modelChipHtml = '';
+
+            if (item.roboflow_class) {
+
+                const confPct =
+                    item.roboflow_confidence != null
+                        ? ` (${Math.round(item.roboflow_confidence * 100)}%)`
+                        : '';
+
+                modelChipHtml = `
+                    <span class="model-class-chip mb-2">
+                        <i class="fa-solid fa-robot"></i>
+                        Model: ${item.roboflow_class}${confPct}
+                    </span>
+                `;
+
+            }
+
+
+            itemsHtml += `
+
+                <div class="card-custom p-3 mb-2 bg-dark">
+
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+
+                        <strong class="text-info">
+                            Item #${item.item_id}
+                        </strong>
+
+                        <span class="badge ${badgeColor} fs-6">
+                            ${item.grade}
+                        </span>
+
+                    </div>
+
+
+                    ${modelChipHtml}
+
+
+                    <p class="small text-slate-400 mb-2">
+                        ${item.agmark_standard}
+                    </p>
+
+
+                    <div class="row text-center g-2 mt-1">
+
+                        <div class="col-3">
+
+                            <div class="defect-pill">
+                                <b>${item.metrics.diameter_mm}</b> mm
+                            </div>
+
+                        </div>
+
+
+                        <div class="col-3">
+
+                            <div class="defect-pill">
+                                <b>${item.metrics.area_cm2}</b> cm²
+                            </div>
+
+                        </div>
+
+
+                        <div class="col-3">
+
+                            <div class="defect-pill text-danger">
+                                Rot:
+                                <b>${item.defects.rot_percentage}%</b>
+                            </div>
+
+                        </div>
+
+
+                        <div class="col-3">
+
+                            <div class="defect-pill text-success">
+                                Color:
+                                <b>
+                                    ${(item.defects.color_score * 100).toFixed(0)}%
+                                </b>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    ${
+                        item.defects.primary_defect &&
+                        !item.defects.primary_defect.includes("Sound")
+                            ? `<div class="small text-danger mt-2">
+                                   <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                                   ${item.defects.primary_defect}
+                               </div>`
+                            : ''
+                    }
+
+                </div>
+
+            `;
+
+
+            recalOptionsHtml +=
+                `<option value="${item.item_id}">Item #${item.item_id} (currently ${item.metrics.diameter_mm}mm)</option>`;
+
+        });
+
+
+        primaryDefect.innerText =
+            highestDefect;
+
+        itemListContainer.innerHTML =
+            itemsHtml;
+
+        recalItemSelect.innerHTML =
+            recalOptionsHtml;
+
+    }
+
+
+    /* =========================================================
+       ON-DEVICE ONION DETECTION
+       ========================================================= */
+
+    function checkFrameForOnionProduce(
+        ctx,
+        width,
+        height
+    ) {
+
+        try {
+
+            const imgData =
+                ctx.getImageData(
+                    0,
+                    0,
+                    width,
+                    height
+                );
+
+            const data = imgData.data;
+
+            let onionPixelCount = 0;
+            let humanSkinCount = 0;
+
+
+            for (
+                let i = 0;
+                i < data.length;
+                i += 16
+            ) {
+
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+
+
+                const isSkin =
+                    (
+                        r > 130 &&
+                        g > 80 &&
+                        g < 160 &&
+                        b > 50 &&
+                        b < 130 &&
+                        r > g &&
+                        g > b &&
+                        (r - g) > 15
+                    );
+
+
+                if (isSkin) {
+
+                    humanSkinCount++;
+
+                    continue;
+
+                }
+
+
+                const isRedOnion =
+                    (
+                        r > 130 &&
+                        r > g + 40 &&
+                        r > b + 25
+                    );
+
+
+                const isYellowOnion =
+                    (
+                        r > 140 &&
+                        g > 100 &&
+                        b < 90 &&
+                        (r - g) < 55 &&
+                        (r - b) > 50
+                    );
+
+
+                const isWhiteOnion =
+                    (
+                        r > 190 &&
+                        g > 190 &&
+                        b > 190 &&
+                        Math.abs(r - g) < 15 &&
+                        Math.abs(r - b) < 15
+                    );
+
+
+                if (
+                    isRedOnion ||
+                    isYellowOnion ||
+                    isWhiteOnion
+                ) {
+
+                    onionPixelCount++;
+
+                }
+
+            }
+
+
+            const totalSampled =
+                data.length / 16;
+
+            const skinRatio =
+                humanSkinCount / totalSampled;
+
+            const produceRatio =
+                onionPixelCount / totalSampled;
+
+
+            if (skinRatio > 0.25) {
+
+                return false;
+
+            }
+
+
+            return produceRatio > 0.16;
+
+        } catch (e) {
+
+            return false;
+
+        }
+
+    }
+
+
+    /* =========================================================
+       LIVE CAMERA
+       ========================================================= */
+
+    webcamBtn.addEventListener(
+        'click',
+        async () => {
+
+            if (!stream) {
+
+                try {
+
+                    stream =
+                        await navigator.mediaDevices.getUserMedia({
+
+                            video: {
+                                width: {
+                                    ideal: 1280
+                                },
+
+                                height: {
+                                    ideal: 720
+                                },
+
+                                facingMode: "environment"
+                            }
+
+                        });
+
+
+                    webcamVideo.srcObject =
+                        stream;
+
+                    webcamVideo.classList.remove(
+                        'd-none'
+                    );
+
+
+                    autoDetectStatus.classList.remove(
+                        'd-none'
+                    );
+
+
+                    autoDetectStatus.className =
+                        "auto-detect-badge bg-success pulse-active mb-2";
+
+
+                    autoDetectStatus.innerHTML =
+                        '<i class="fa-solid fa-eye me-1"></i>' +
+                        ' Live auto-detect active: scanning for onion…';
+
+
+                    webcamBtn.className =
+                        "btn btn-danger w-100 mb-2 fw-bold";
+
+
+                    webcamBtn.innerHTML =
+                        '<i class="fa-solid fa-power-off me-2"></i>' +
+                        ' Stop live auto-detect camera';
+
+
+                    autoDetectInterval =
+                        setInterval(
+                            async () => {
+
+                                const now =
+                                    Date.now();
+
+
+                                if (
+                                    isProcessingFrame ||
+                                    (
+                                        now -
+                                        lastAutoCaptureTime <
+                                        1500
+                                    )
+                                ) {
+
+                                    return;
+
+                                }
+
+
+                                if (
+                                    webcamVideo.videoWidth > 0 &&
+                                    webcamVideo.videoHeight > 0
+                                ) {
+
+                                    webcamCanvas.width =
+                                        webcamVideo.videoWidth;
+
+                                    webcamCanvas.height =
+                                        webcamVideo.videoHeight;
+
+
+                                    const ctx =
+                                        webcamCanvas.getContext(
+                                            '2d'
+                                        );
+
+
+                                    ctx.drawImage(
+                                        webcamVideo,
+                                        0,
+                                        0,
+                                        webcamCanvas.width,
+                                        webcamCanvas.height
+                                    );
+
+
+                                    const hasOnion =
+                                        checkFrameForOnionProduce(
+                                            ctx,
+                                            webcamCanvas.width,
+                                            webcamCanvas.height
+                                        );
+
+
+                                    if (hasOnion) {
+
+                                        isProcessingFrame =
+                                            true;
+
+                                        lastAutoCaptureTime =
+                                            Date.now();
+
+
+                                        autoDetectStatus.className =
+                                            "auto-detect-badge bg-warning mb-2";
+
+
+                                        autoDetectStatus.innerHTML =
+                                            '<i class="fa-solid fa-bolt me-1"></i>' +
+                                            ' Onion detected — auto-grading…';
+
+
+                                        webcamCanvas.toBlob(
+                                            async (blob) => {
+
+                                                if (
+                                                    blob &&
+                                                    blob.size > 0
+                                                ) {
+
+                                                    const file =
+                                                        new File(
+                                                            [blob],
+                                                            "live_autodetect.jpg",
+                                                            {
+                                                                type: "image/jpeg"
+                                                            }
+                                                        );
+
+
+                                                    await processImageFile(
+                                                        file
+                                                    );
+
+                                                }
+
+
+                                                isProcessingFrame =
+                                                    false;
+
+
+                                                autoDetectStatus.className =
+                                                    "auto-detect-badge bg-success pulse-active mb-2";
+
+
+                                                autoDetectStatus.innerHTML =
+                                                    '<i class="fa-solid fa-eye me-1"></i>' +
+                                                    ' Live auto-detect active: scanning for onion…';
+
+                                            },
+                                            'image/jpeg',
+                                            0.85
+                                        );
+
+                                    }
+
+                                }
+
+                            },
+                            300
+                        );
+
+
+                } catch (err) {
+
+                    alert(
+                        "Camera access denied or unavailable: " +
+                        err.message
+                    );
+
+                }
+
+            } else {
+
+                if (autoDetectInterval) {
+
+                    clearInterval(
+                        autoDetectInterval
+                    );
+
+                }
+
+
+                if (stream) {
+
+                    stream
+                        .getTracks()
+                        .forEach(
+                            track => track.stop()
+                        );
+
+                }
+
+
+                stream = null;
+
+
+                webcamVideo.classList.add(
+                    'd-none'
+                );
+
+
+                autoDetectStatus.classList.add(
+                    'd-none'
+                );
+
+
+                webcamBtn.className =
+                    "btn btn-outline-info w-100 mb-2 fw-bold";
+
+
+                webcamBtn.innerHTML =
+                    '<i class="fa-solid fa-video me-2"></i>' +
+                    ' Start live auto-detect camera';
+
+            }
+
+        }
+    );
+
+</script>
+
+</body>
+</html>
