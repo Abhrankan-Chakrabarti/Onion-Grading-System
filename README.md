@@ -85,5 +85,9 @@ Navigate to **`http://127.0.0.1:8000`** in your browser.
 
 ---
 
-## 📜 License
+## � Contributors
+- Abhishek Saha (@sahaabhishek0987)
+- Arunima Adhikary (@arunima-adhikary7)
+
+## �📜 License
 This project is open-source under the MIT License.
